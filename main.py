@@ -26,7 +26,7 @@ def find_first_dfs(node, pred) -> Optional[clang.cindex.Cursor]:
         if pred(c):
             return c
 
-        current = find_first_dfs(c)
+        current = find_first_dfs(c, pred)
         if current != None:
             return current
 
