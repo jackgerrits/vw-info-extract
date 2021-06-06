@@ -7,13 +7,15 @@ from clang.cindex import CursorKind
 
 from typing import Callable, Deque, Tuple, List, Optional
 
+NodePredicate = Callable[[clang.cindex.Cursor], bool]
+
 
 def print_node(node: clang.cindex.Cursor, indent: int = 0) -> None:
     print(
         f"{' '*indent}{node.spelling} [line={ node.location.line}, col={node.location.column}], {node.kind}")
 
 
-def print_tree(node: clang.cindex.Cursor, pred: Callable[[clang.cindex.Cursor], bool] = None, starting_indent: int = 0, indent_width: int = 2) -> None:
+def print_tree(node: clang.cindex.Cursor, pred: NodePredicate = None, starting_indent: int = 0, indent_width: int = 2) -> None:
     if (pred is not None and pred(node)) or pred is None:
         print_node(node, indent=starting_indent)
 
@@ -21,7 +23,7 @@ def print_tree(node: clang.cindex.Cursor, pred: Callable[[clang.cindex.Cursor], 
         print_tree(c, pred=pred, starting_indent=starting_indent+indent_width)
 
 
-def find_first_dfs(node, pred) -> Optional[clang.cindex.Cursor]:
+def find_first_dfs(node: clang.cindex.Cursor, pred: NodePredicate) -> Optional[clang.cindex.Cursor]:
     for c in node.get_children():
         if pred(c):
             return c
@@ -33,7 +35,7 @@ def find_first_dfs(node, pred) -> Optional[clang.cindex.Cursor]:
     return None
 
 
-def find_first_bfs(node, pred, debug: bool = False):
+def find_first_bfs(node: clang.cindex.Cursor, pred: NodePredicate,  debug: bool = False) -> Optional[clang.cindex.Cursor]:
     to_visit: Deque[Tuple[clang.cindex.Cursor, int]
                     ] = collections.deque([(node, 0)])
     while len(to_visit) != 0:
@@ -50,7 +52,7 @@ def find_first_bfs(node, pred, debug: bool = False):
     return None
 
 
-def find_all(node, pred):
+def find_all(node: clang.cindex.Cursor, pred: NodePredicate) -> List[clang.cindex.Cursor]:
     results: List[clang.cindex.Cursor] = []
     for c in node.get_children():
         if pred(c):
@@ -59,12 +61,12 @@ def find_all(node, pred):
     return results
 
 
-def is_name_and_kind(name, kind):
+def is_name_and_kind(name: str, kind: CursorKind) -> NodePredicate:
     return lambda node: name == node.spelling and node.kind == kind
 
 
-def handle_parse_args_file(node):
-    results = []
+def handle_parse_args_file(node: clang.cindex.Cursor) -> List[str]:
+    results: List[str] = []
     parse_reductions_decls = find_all(node, is_name_and_kind(
         "parse_reductions", CursorKind.FUNCTION_DECL))
     for parse_reductions_decl in parse_reductions_decls:
@@ -79,7 +81,7 @@ def handle_parse_args_file(node):
     return results
 
 
-def handle_setup_fn(node):
+def handle_setup_fn(node: clang.cindex.Cursor) -> None:
     found = find_first_bfs(node, is_name_and_kind(
         "set_prediction_type", CursorKind.CALL_EXPR))
     if found:
@@ -117,7 +119,7 @@ def handle_setup_fn(node):
                 print(f"Necessary option: {literal.spelling}")
 
 
-def handle_reduction_file(node, setup_fn_name):
+def handle_reduction_file(node: clang.cindex.Cursor, setup_fn_name: str) -> None:
     # Since we're looking for a function that is also in the header we'll get two hits.
     # We should use the second one as the first is just the header declaration.
     found = find_all(node, lambda node: setup_fn_name ==
@@ -129,7 +131,7 @@ def handle_reduction_file(node, setup_fn_name):
         print("Failed to find setup fn node")
 
 
-def generate_ast(file, index, includes):
+def generate_ast(file: str, index: clang.cindex.Index, includes: List[str]) -> clang.cindex.Cursor:
     translation_unit = index.parse(file, args=includes)
     found_diag = False
     for diag in translation_unit.diagnostics:
@@ -145,9 +147,9 @@ def generate_ast(file, index, includes):
     return translation_unit.cursor
 
 
-def find_files_with_text(text_to_find):
+def find_files_with_text(text_to_find: str) -> List[str]:
     result = subprocess.check_output(shlex.split(
-        f"grep --include=\*.cc --exclude=parse_args.cc -rl 'vowpalwabbit' -e '{text_to_find}'"))
+        f"grep --include=\*.cc --exclude=parse_args.cc -rl 'vowpalwabbit' -e '{text_to_find}'"), encoding='UTF-8')
     return result.splitlines()
 
 
