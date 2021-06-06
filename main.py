@@ -85,8 +85,7 @@ def to_qualified_name(node):
 
 
 def handle_setup_fn(node):
-    found = find_first_bfs(node, lambda node: "set_prediction_type" ==
-                           node.spelling and node.kind == CursorKind.CALL_EXPR)
+    found = find_first_bfs(node, is_name_and_kind("set_prediction_type", CursorKind.CALL_EXPR))
     if found:
         for arg in found.get_arguments():
             enum_type = arg.type.spelling
