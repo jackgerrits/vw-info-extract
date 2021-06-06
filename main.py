@@ -29,7 +29,7 @@ def find_first_dfs(node: clang.cindex.Cursor, pred: NodePredicate) -> Optional[c
             return c
 
         current = find_first_dfs(c, pred)
-        if current != None:
+        if current is not None:
             return current
 
     return None
@@ -149,7 +149,7 @@ def generate_ast(file: str, index: clang.cindex.Index, includes: List[str]) -> c
 
 def find_files_with_text(text_to_find: str) -> List[str]:
     result = subprocess.check_output(shlex.split(
-        f"grep --include=\*.cc --exclude=parse_args.cc -rl 'vowpalwabbit' -e '{text_to_find}'"), encoding='UTF-8')
+        f"grep --include=\\*.cc --exclude=parse_args.cc -rl 'vowpalwabbit' -e '{text_to_find}'"), encoding='UTF-8')
     return result.splitlines()
 
 
