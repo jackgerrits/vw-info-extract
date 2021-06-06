@@ -55,13 +55,6 @@ def find_all(node, pred):
         results.extend(find_all(c, pred))
     return results
 
-
-def get_enum_type(node):
-    for c in node.get_children():
-        if c.kind == CursorKind.DECL_REF_EXPR:
-            return to_qualified_name(c)
-
-
 def is_name_and_kind(name, kind):
     return lambda node: name == node.spelling and node.kind == kind
 
@@ -95,14 +88,19 @@ def handle_setup_fn(node):
     found = find_first_bfs(node, lambda node: "set_prediction_type" ==
                            node.spelling and node.kind == CursorKind.CALL_EXPR)
     if found:
-        print(f"prediction type: {'::'.join(get_enum_type(found))}")
+        for arg in found.get_arguments():
+            enum_type = arg.type.spelling
+            enum_value = arg.spelling
+            print(f"prediction type: {enum_type}::{enum_value}")
     else:
         print("Failed to find prediction type")
 
-    found = find_first_bfs(node, lambda node: "set_label_type" ==
-                           node.spelling and node.kind == CursorKind.CALL_EXPR)
+    found = find_first_bfs(node, is_name_and_kind("set_label_type", CursorKind.CALL_EXPR))
     if found:
-        print(f"label type: {'::'.join(get_enum_type(found))}")
+        for arg in found.get_arguments():
+            enum_type = arg.type.spelling
+            enum_value = arg.spelling
+            print(f"prediction type: {enum_type}::{enum_value}")
     else:
         print("Failed to find label type")
 
