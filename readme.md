@@ -1,6 +1,6 @@
 # vw-info-extract
 
-This repo is an experiment of using [`libclang`](https://clang.llvm.org/doxygen/group__CINDEX.html)'s [Python bindings](https://pypi.org/project/libclang/) to parse [vowpal_wabbit](https://github.com/VowpalWabbit/vowpal_wabbit) source code into the AST and traverse this to extract useful information about reductions. It is created with the thinking of automatically producing metadata based documentation about all VW reductions.
+This repo is an experiment of using [Python bindings](https://pypi.org/project/libclang/) for [`libclang`](https://clang.llvm.org/doxygen/group__CINDEX.html) to parse [vowpal_wabbit](https://github.com/VowpalWabbit/vowpal_wabbit) source code into the AST and traverse this to extract useful information about reductions. It is created with the thinking of automatically producing metadata based documentation about all VW reductions.
 
 It is by no means ready in any way, but I wanted to save progress.
 
