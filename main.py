@@ -5,13 +5,15 @@ import shlex
 import collections
 from clang.cindex import CursorKind
 
+from typing import Callable, Deque, Tuple, List, Optional
 
-def print_node(node, indent=0):
+
+def print_node(node: clang.cindex.Cursor, indent: int = 0) -> None:
     print(
         f"{' '*indent}{node.spelling} [line={ node.location.line}, col={node.location.column}], {node.kind}")
 
 
-def print_tree(node, pred=None, starting_indent=0, indent_width=2):
+def print_tree(node: clang.cindex.Cursor, pred: Callable[[clang.cindex.Cursor], bool] = None, starting_indent: int = 0, indent_width: int = 2) -> None:
     if (pred is not None and pred(node)) or pred is None:
         print_node(node, indent=starting_indent)
 
@@ -19,7 +21,7 @@ def print_tree(node, pred=None, starting_indent=0, indent_width=2):
         print_tree(c, pred=pred, starting_indent=starting_indent+indent_width)
 
 
-def find_first_dfs(node, pred):
+def find_first_dfs(node, pred) -> Optional[clang.cindex.Cursor]:
     for c in node.get_children():
         if pred(c):
             return c
@@ -31,8 +33,9 @@ def find_first_dfs(node, pred):
     return None
 
 
-def find_first_bfs(node, pred, debug=False):
-    to_visit = collections.deque([(node, 0)])
+def find_first_bfs(node, pred, debug: bool = False):
+    to_visit: Deque[Tuple[clang.cindex.Cursor, int]
+                    ] = collections.deque([(node, 0)])
     while len(to_visit) != 0:
         current, indent = to_visit.popleft()
         if debug:
@@ -48,12 +51,13 @@ def find_first_bfs(node, pred, debug=False):
 
 
 def find_all(node, pred):
-    results = []
+    results: List[clang.cindex.Cursor] = []
     for c in node.get_children():
         if pred(c):
             results.append(c)
         results.extend(find_all(c, pred))
     return results
+
 
 def is_name_and_kind(name, kind):
     return lambda node: name == node.spelling and node.kind == kind
@@ -94,7 +98,8 @@ def handle_setup_fn(node):
     else:
         print("Failed to find prediction type")
 
-    found = find_first_bfs(node, is_name_and_kind("set_label_type", CursorKind.CALL_EXPR))
+    found = find_first_bfs(node, is_name_and_kind(
+        "set_label_type", CursorKind.CALL_EXPR))
     if found:
         for arg in found.get_arguments():
             enum_type = arg.type.spelling
@@ -106,14 +111,19 @@ def handle_setup_fn(node):
     add_calls = find_all(node, is_name_and_kind("add", CursorKind.CALL_EXPR))
     for add_call in add_calls:
         for arg in add_call.get_arguments():
-            necessary_call = find_first_bfs(arg, is_name_and_kind("necessary", CursorKind.CALL_EXPR))
+            necessary_call = find_first_bfs(
+                arg, is_name_and_kind("necessary", CursorKind.CALL_EXPR))
             if necessary_call is not None:
-                mk_option_node = find_first_bfs(add_call, is_name_and_kind("make_option", CursorKind.CALL_EXPR))
+                mk_option_node = find_first_bfs(
+                    add_call, is_name_and_kind("make_option", CursorKind.CALL_EXPR))
                 # The zeroth argument to make_option is the option long name
+                assert mk_option_node is not None
                 argument_zero = next(mk_option_node.get_arguments())
-                literal = find_first_bfs(argument_zero, lambda node: node.kind == CursorKind.STRING_LITERAL)
+                literal = find_first_bfs(
+                    argument_zero, lambda node: node.kind == CursorKind.STRING_LITERAL)
                 assert literal is not None
                 print(f"Necessary option: {literal.spelling}")
+
 
 def handle_reduction_file(node, setup_fn_name):
     # Since we're looking for a function that is also in the header we'll get two hits.
