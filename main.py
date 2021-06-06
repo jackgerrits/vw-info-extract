@@ -79,20 +79,9 @@ def handle_parse_args_file(node):
     return results
 
 
-def to_qualified_name(node):
-    assert node.kind == CursorKind.DECL_REF_EXPR
-    name_components = []
-    for c in node.get_children():
-        offset = 0
-        if c.spelling.startswith("enum "):
-            offset = 5
-        name_components.append(c.spelling[offset:])
-    name_components.append(node.spelling)
-    return name_components
-
-
 def handle_setup_fn(node):
-    found = find_first_bfs(node, is_name_and_kind("set_prediction_type", CursorKind.CALL_EXPR))
+    found = find_first_bfs(node, is_name_and_kind(
+        "set_prediction_type", CursorKind.CALL_EXPR))
     if found:
         for arg in found.get_arguments():
             enum_type = arg.type.spelling
