@@ -126,7 +126,7 @@ def handle_reduction_file(node, setup_fn_name):
     found = find_all(node, lambda node: setup_fn_name ==
                      node.spelling and node.kind == CursorKind.FUNCTION_DECL)
     if len(found) != 0:
-        assert(len(found) >= 2)
+        assert len(found) >= 2
         handle_setup_fn(found[1])
     else:
         print("Failed to find setup fn node")
