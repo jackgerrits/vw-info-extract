@@ -71,8 +71,11 @@ def handle_parse_args_file(node):
         push_backs = find_all(parse_reductions_decl, is_name_and_kind(
             "push_back", CursorKind.CALL_EXPR))
         for push_back in push_backs:
-            for reduction_arg in find_all(push_back, lambda node: node.spelling != "reductions" and node.kind == CursorKind.DECL_REF_EXPR):
-                results.append(to_qualified_name(reduction_arg))
+            # Each call to push_back should have a single argument.
+            reduction_arg = next(push_back.get_arguments())
+            # By using the tokens we get the raw templated setup functions too.
+            results.append(
+                "".join(map(lambda tok: tok.spelling, reduction_arg.get_tokens())))
     return results
 
 
@@ -194,7 +197,7 @@ if __name__ == "__main__":
     if args.which == "list_reductions":
         root = generate_ast("vowpalwabbit/parse_args.cc", index, includes)
         for fn in handle_parse_args_file(root):
-            print("::".join(fn))
+            print(fn)
     elif args.which == "parse_setup":
         for file_name in find_files_with_text(args.name):
             root = generate_ast(file_name, index, includes)
