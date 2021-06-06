@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Extract useful information from vowpal_wabbit source code. Must be run in vowpal_wabbit repo root.")
     # TODO
-    # parser.add_argument('--vw_root')
+    # parser.add_argument('--compile_commands')
     subparsers = parser.add_subparsers()
     list_reductions_subparser = subparsers.add_parser(
         "list_reductions", help="Outputs the all reduction setup function names")
@@ -175,6 +175,7 @@ if __name__ == "__main__":
 
     index = clang.cindex.Index.create()
 
+    # TODO determine includes using compile_commands.json
     includes = ["-Ivowpalwabbit",
                 "-Ibuild/vowpalwabbit",
                 "-Iexplore",
