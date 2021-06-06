@@ -31,4 +31,3 @@ optional arguments:
 - `list_reductions` cannot handle setup functions which contain a template
 - `parse_setup` cannot use namespace qualified names for lookup
 - Only works with reductions using the `make_reduction_learner` style interface
-- Necessary option is not being correctly extracted and resulting in false positives

@@ -103,22 +103,17 @@ def handle_setup_fn(node):
     else:
         print("Failed to find label type")
 
-    found = find_all(node, lambda node: "add" ==
-                     node.spelling and node.kind == CursorKind.CALL_EXPR)
-
-    # The 0th one seems to contain all options. So chop it off?
-    if len(found) > 0:
-        found = found[1:]
-
-    for f in found:
-        # This is a necessary option
-        if find_first_bfs(f, lambda node: "necessary" == node.spelling) is not None:
-            mk_option_node = find_first_bfs(
-                f, lambda node: "make_option" == node.spelling)
-            option_name = find_first_bfs(
-                mk_option_node, lambda node: node.kind == CursorKind.STRING_LITERAL)
-            print(f"Necessary option: {option_name.spelling}")
-
+    add_calls = find_all(node, is_name_and_kind("add", CursorKind.CALL_EXPR))
+    for add_call in add_calls:
+        for arg in add_call.get_arguments():
+            necessary_call = find_first_bfs(arg, is_name_and_kind("necessary", CursorKind.CALL_EXPR))
+            if necessary_call is not None:
+                mk_option_node = find_first_bfs(add_call, is_name_and_kind("make_option", CursorKind.CALL_EXPR))
+                # The zeroth argument to make_option is the option long name
+                argument_zero = next(mk_option_node.get_arguments())
+                literal = find_first_bfs(argument_zero, lambda node: node.kind == CursorKind.STRING_LITERAL)
+                assert literal is not None
+                print(f"Necessary option: {literal.spelling}")
 
 def handle_reduction_file(node, setup_fn_name):
     # Since we're looking for a function that is also in the header we'll get two hits.
